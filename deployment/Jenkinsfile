@@ -57,8 +57,9 @@ pipeline {
                     def RELEASE = "sh(script: 'date +%Y-%m-%d_%s', returnStdout: true).trim()"
                     def RELEASE_DIR = "${env.PRJ_DIR}/release-${RELEASE}"
                     sshCommand remote: remote, command: """
-                        sudo -u www-data bash -c 'git clone -b ${params.BRANCH_TO_BUILD} ${env.GIT_URL} ${env.RELEASE_DIR}'
+                        sudo -u www-data bash -c 'git clone -b ${params.BRANCH_TO_BUILD} ${env.GIT_URL} ${RELEASE_DIR}'
                     """
+                    env.RELEASE_DIR = "${RELEASE_DIR}"
                 }
             }
         }
