@@ -64,19 +64,40 @@ pipeline {
             }
         }
 
-        stage('Deploy M2') {
+                        
+        stage('Run setup:upgrade') {
             steps {
                 script {
                     sshCommand remote: remote, command: """
                         cd ${env.RELEASE_DIR}
                         su - www-data -s php bin/magento setup:upgrade
-                        su - www-data -sphp bin/magento setup:di:compile
-                        su - www-data -s php bin/magento setup:static-content:deploy en_US ru_RU -f
                     """
                 }
             }
         }
 
+        stage('Run setup:di:compile') {
+            steps {
+                script {
+                    sshCommand remote: remote, command: """
+                        cd ${env.RELEASE_DIR}
+                        su - www-data -s php bin/magento setup:di:compile
+                    """
+                }
+            }
+        }
+
+        stage('Run content:deploy') {
+            steps {
+                script {
+                    sshCommand remote: remote, command: """
+                        cd ${env.RELEASE_DIR}
+                        su - www-data -s php bin/magento setup:static-content:deploy en_US ru_RU -f
+                    """
+                }
+            }
+        }
+        
         stage('Switch release') {
             steps {
                 script {
