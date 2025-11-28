@@ -1,0 +1,104 @@
+def remote = [:]
+
+pipeline {
+    agent any
+    parameters {
+        gitParameter(type: 'PT_BRANCH', name: 'BRANCH_TO_BUILD', branchFilter: 'origin/(.*)', defaultValue: 'main', selectedValue: 'DEFAULT', sortMode: 'DESCENDING_SMART')
+        choice(name: 'ENV', choices: ['dev', 'demo', 'prod'], description: 'Select environment')
+        booleanParam(name: 'CLEAR_CACHE', defaultValue: false)
+    }
+
+    environment {
+        PRJ_DIR='/var/www/plant-shop'
+        SLACK=credentials('token')
+        CHANNEL_ID=""
+        GIT_URL=""
+    }
+
+    stages {
+        stage('Set env to deploy'){
+            steps {
+                script {
+                    switch(params.ENV) {
+                        case 'dev':
+                            env.HOST = 'dev.example.com'
+                            break
+                        case 'demo':
+                            env.HOST = 'demo.example.com'
+                            break
+                        case 'prod':
+                            env.HOST = 'prod.example.com'
+                            break
+                        default:
+                            env.HOST = 'localhost'
+                    }
+                    echo "HOST set to: ${env.HOST}"
+                }
+            }
+        }
+
+        stage('Prepare Credentials') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-key', usernameVariable: 'username', keyFileVariable: 'private_key')]) {
+                    script {
+                        remote.name = "${env.HOST}"
+                        remote.host = "${env.HOST}"
+                        remote.user = "${username}"
+                        remote.identity = readFile "${private_key}"
+                        remote.allowAnyHosts = true
+                    }
+                }
+           }
+        }
+
+        stage('Checkout branch to build') {
+            steps {
+                script {
+                    env.RELEASE_DIR = "${env.PRJ_DIR}/release-$(sh(script: 'date +%Y-%m-%d_%s', returnStdout: true).trim())"
+                    sshCommand remote: remote, command: """
+                        git clone -b ${params.BRANCH_TO_BUILD} ${env.GIT_URL} ${env.RELEASE_DIR} 
+                    """
+                }
+            }
+        }
+
+        stage('Deploy M2') {
+            steps {
+                script {
+                    sshCommand remote: remote, command: """
+                        cd ${env.RELEASE_DIR}
+                        php bin/magento setup:upgrade
+                        php bin/magento setup:di:compile
+                        php bin/magento setup:static-content:deploy en_US ru_RU -f
+                    """
+                }
+            }
+        }
+
+        stage('Switch release') {
+            steps {
+                script {
+                    sshCommand remote: remote, command: """
+                        cd ${env.PRJ_DIR}
+                        ln -sf ${RELEASE_DIR} current
+                    """
+                }
+            }
+        }
+
+        stage('Clear cache') {
+            when {
+                expression { params.CLEAR_CACHE }
+            }
+            steps {
+                script {
+                    sshCommand remote: remote, command: """
+                        php bin/magento cache:flush
+                    """
+                }
+            }
+        }
+
+
+    }
+}
