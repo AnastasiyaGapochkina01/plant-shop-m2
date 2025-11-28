@@ -56,7 +56,7 @@ pipeline {
                 script {
                     env.RELEASE_DIR = "${env.PRJ_DIR}/release-$(sh(script: 'date +%Y-%m-%d_%s', returnStdout: true).trim())"
                     sshCommand remote: remote, command: """
-                        git clone -b ${params.BRANCH_TO_BUILD} ${env.GIT_URL} ${env.RELEASE_DIR} 
+                        sudo -u www-data bash -c 'git clone -b ${params.BRANCH_TO_BUILD} ${env.GIT_URL} ${env.RELEASE_DIR}'
                     """
                 }
             }
@@ -67,9 +67,9 @@ pipeline {
                 script {
                     sshCommand remote: remote, command: """
                         cd ${env.RELEASE_DIR}
-                        php bin/magento setup:upgrade
-                        php bin/magento setup:di:compile
-                        php bin/magento setup:static-content:deploy en_US ru_RU -f
+                        su - www-data -s php bin/magento setup:upgrade
+                        su - www-data -sphp bin/magento setup:di:compile
+                        su - www-data -s php bin/magento setup:static-content:deploy en_US ru_RU -f
                     """
                 }
             }
@@ -80,7 +80,7 @@ pipeline {
                 script {
                     sshCommand remote: remote, command: """
                         cd ${env.PRJ_DIR}
-                        ln -sf ${RELEASE_DIR} current
+                        su - www-data -s ln -sf ${env.RELEASE_DIR} ${env.PRJ_DIR}/current
                     """
                 }
             }
@@ -93,7 +93,8 @@ pipeline {
             steps {
                 script {
                     sshCommand remote: remote, command: """
-                        php bin/magento cache:flush
+                        cd ${env.RELEASE_DIR}
+                        su - www-data -s php bin/magento cache:flush
                     """
                 }
             }
