@@ -10,9 +10,9 @@ pipeline {
 
     environment {
         PRJ_DIR='/var/www/plant-shop'
-        SLACK=credentials('token')
-        CHANNEL_ID=""
-        GIT_URL=""
+        //SLACK=credentials('token')
+        //CHANNEL_ID=""
+        GIT_URL="https://github.com/AnastasiyaGapochkina01/plant-shop-m2.git"
     }
 
     stages {
