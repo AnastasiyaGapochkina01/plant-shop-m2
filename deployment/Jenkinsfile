@@ -70,7 +70,8 @@ pipeline {
                 script {
                     sshCommand remote: remote, command: """
                         cd ${env.RELEASE_DIR}
-                        su - www-data -s php bin/magento setup:upgrade
+                        sudo -u www-data bash -c 'composer install'
+                        sudo -u www-data bash -c 'php bin/magento setup:upgrade'
                     """
                 }
             }
@@ -81,7 +82,7 @@ pipeline {
                 script {
                     sshCommand remote: remote, command: """
                         cd ${env.RELEASE_DIR}
-                        su - www-data -s php bin/magento setup:di:compile
+                        sudo -u www-data bash -c 'php bin/magento setup:di:compile'
                     """
                 }
             }
@@ -92,7 +93,7 @@ pipeline {
                 script {
                     sshCommand remote: remote, command: """
                         cd ${env.RELEASE_DIR}
-                        su - www-data -s php bin/magento setup:static-content:deploy en_US ru_RU -f
+                        sudo -u www-data bash -c 'php bin/magento setup:static-content:deploy en_US ru_RU -f'
                     """
                 }
             }
@@ -103,7 +104,7 @@ pipeline {
                 script {
                     sshCommand remote: remote, command: """
                         cd ${env.PRJ_DIR}
-                        su - www-data -s ln -sf ${env.RELEASE_DIR} ${env.PRJ_DIR}/current
+                        sudo -u www-data bash -c 'ln -sf ${env.RELEASE_DIR} ${env.PRJ_DIR}/current'
                     """
                 }
             }
@@ -117,7 +118,7 @@ pipeline {
                 script {
                     sshCommand remote: remote, command: """
                         cd ${env.RELEASE_DIR}
-                        su - www-data -s php bin/magento cache:flush
+                        sudo -u www-data bash -c 'php bin/magento cache:flush'
                     """
                 }
             }
