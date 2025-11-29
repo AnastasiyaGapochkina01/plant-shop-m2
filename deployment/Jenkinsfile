@@ -43,6 +43,17 @@ pipeline {
                 }
             }
         }
+
+        stage('Prepare environments') {
+            steps {
+                script {
+                    sshCommand remote: remote, command: """
+                        cd ${env.PRJ_DIR}
+                        sudo -u www-data bash -c 'cp shared/app/etc/*.php ${env.RELEASE_DIR}/app/etc/'
+                    """
+                }
+            }
+        }
                         
         stage('Run setup:upgrade') {
             steps {
