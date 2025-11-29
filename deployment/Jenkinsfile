@@ -13,30 +13,10 @@ pipeline {
         //SLACK=credentials('token')
         //CHANNEL_ID=""
         GIT_URL="https://github.com/AnastasiyaGapochkina01/plant-shop-m2.git"
+        HOST='18.219.95.242'
     }
 
     stages {
-        stage('Set env to deploy'){
-            steps {
-                script {
-                    switch(params.ENV) {
-                        case 'dev':
-                            env.HOST = '3.129.207.52'
-                            break
-                        case 'demo':
-                            env.HOST = '3.129.207.52'
-                            break
-                        case 'prod':
-                            env.HOST = '3.129.207.52'
-                            break
-                        default:
-                            env.HOST = '3.129.207.52'
-                    }
-                    echo "HOST set to: ${env.HOST}"
-                }
-            }
-        }
-
         stage('Prepare Credentials') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-key', usernameVariable: 'username', keyFileVariable: 'private_key')]) {
@@ -63,7 +43,6 @@ pipeline {
                 }
             }
         }
-
                         
         stage('Run setup:upgrade') {
             steps {
