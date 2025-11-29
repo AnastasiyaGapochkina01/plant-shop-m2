@@ -3,7 +3,7 @@ def remote = [:]
 pipeline {
     agent any
     parameters {
-        string(name: 'RELEASE_VERSION', defaultValue: '', description: 'Release version to rollback, ex: release-2025-11-29_1764425124')
+        string(name: 'RELEASE_VERSION', defaultValue: '', description: 'Release version to rollback, ex: release-2025-11-29_1764425124', trim: true)
     }
   
     environment {
